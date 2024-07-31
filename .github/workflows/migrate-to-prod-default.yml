@@ -29,12 +29,26 @@ jobs:
 
       - name: Fetch base branch
         run: |
-          git fetch origin main # Ensure the base branch (main) is up-to-date
+          git fetch origin main  # Ensure the base branch (main) is up-to-date
+
+      - name: Debug information
+        run: |
+          # Display the current branch and status
+          echo "Current branch:"
+          git branch
+          echo "Current status:"
+          git status
+
+          # Display the latest commits on the main branch and current branch
+          echo "Latest commits on origin/main:"
+          git log origin/main -n 5
+          echo "Latest commits on current branch:"
+          git log HEAD -n 5
 
       - name: Identify new migration files
         id: new_files
         run: |
-          git diff --name-only origin/main...HEAD | grep '\.sql$' > new_migrations.txt
-          # Output the list of new migrations for debugging
+          set -x  # Print each command before executing
+          git diff --name-only origin/main...HEAD | grep '\.sql$' > new_migrations.txt || true
           echo "New migration files:"
-          echo "$(cat new_migrations.txt)"
+          cat new_migrations.txt
