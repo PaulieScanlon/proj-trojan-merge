@@ -6,8 +6,14 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'The pull request number'
+        required: true
+        type: number
 
 env:
+  GH_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
   PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }} # Production or primary database
   PG_VERSION: '16'
 
@@ -25,30 +31,39 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch all history
+          fetch-depth: 0
 
-      - name: Fetch base branch
+      - name: Checkout PR
         run: |
-          git fetch origin main  # Ensure the base branch (main) is up-to-date
+          pr_number=${{ github.event.inputs.pr_number || github.event.pull_request.number }}
+          git fetch origin pull/$pr_number/head:pr-$pr_number
+          git checkout pr-$pr_number
 
-      - name: Debug information
+      - name: Get changed files
         run: |
-          # Display the current branch and status
-          echo "Current branch:"
-          git branch
-          echo "Current status:"
-          git status
+          git diff origin/main --name-only > migration_files.txt
+          echo "Changed files:"
+          cat migration_files.txt
 
-          # Display the latest commits on the main branch and current branch
-          echo "Latest commits on origin/main:"
-          git log origin/main -n 5
-          echo "Latest commits on current branch:"
-          git log HEAD -n 5
-
-      - name: Identify new migration files
-        id: new_files
+      - name: Apply migrations
         run: |
-          set -x  # Print each command before executing
-          git diff --name-only origin/main...HEAD | grep '\.sql$' > new_migrations.txt || true
-          echo "New migration files:"
-          cat new_migrations.txt
+          while IFS= read -r file; do
+            # Check if the file exists
+            if [ ! -f "$file" ]; then
+              echo "$file does not exist"
+              continue
+            fi
+            
+            # Check if the file has a .sql extension
+            if [[ "$file" != *.sql ]]; then
+              echo "$file is not a SQL file"
+              continue
+            fi
+
+            # Apply the SQL file
+            echo "Processing $file"
+            if ! /usr/lib/postgresql/${{ env.PG_VERSION }}/bin/psql "${{ env.PROD_DATABASE_URL }}" < "$file"; then
+              echo "Error applying $file"
+              exit 1
+            fi
+          done < migration_files.txt
