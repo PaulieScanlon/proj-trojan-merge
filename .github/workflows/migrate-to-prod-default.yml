@@ -6,8 +6,14 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'The pull request number'
+        required: true
+        type: number
 
 env:
+  GH_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
   PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }} # Production or primary database
   PG_VERSION: '16'
 
@@ -16,39 +22,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: List files changed in PR
+        id: list_files
+        run: |
+          pr_number=${{ github.event.inputs.pr_number || github.event.pull_request.number }}
+          changed_files=$(gh pr view $pr_number --json files --jq '.files[].path' | tr '\n' ' ')
+          echo "changed_files=$changed_files" >> $GITHUB_ENV
+
+      - name: Show PR diff
+        run: |
+          pr_number=${{ github.event.inputs.pr_number || github.event.pull_request.number }}
+          gh pr diff $pr_number
+
       - name: Install PostgreSQL
         run: |
           sudo apt update
           yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
           sudo apt install -y postgresql-${{ env.PG_VERSION }}
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetch all history
-
-      - name: Fetch base branch
+      - name: Echo file names
         run: |
-          git fetch origin main  # Ensure the base branch (main) is up-to-date
-
-      - name: Debug information
-        run: |
-          # Display the current branch and status
-          echo "Current branch:"
-          git branch
-          echo "Current status:"
-          git status
-
-          # Display the latest commits on the main branch and current branch
-          echo "Latest commits on origin/main:"
-          git log origin/main -n 5
-          echo "Latest commits on current branch:"
-          git log HEAD -n 5
-
-      - name: Identify new migration files
-        id: new_files
-        run: |
-          set -x  # Print each command before executing
-          git diff --name-only origin/main...HEAD | grep '\.sql$' > new_migrations.txt || true
-          echo "New migration files:"
-          cat new_migrations.txt
+          echo "Changed files in PR:"
+          echo "${{ env.changed_files }}"
