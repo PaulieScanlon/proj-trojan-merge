@@ -7,13 +7,34 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }} # Production or primary database
+  PG_VERSION: '16'
+
 jobs:
   run-on-main-merge:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Install PostgreSQL
+        run: |
+          sudo apt update
+          yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+          sudo apt install -y postgresql-${{ env.PG_VERSION }}
+
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history
 
-      - name: Run script
-        run: echo "hello world"
+      - name: Fetch base branch
+        run: |
+          git fetch origin main # Ensure the base branch (main) is up-to-date
+
+      - name: Identify new migration files
+        id: new_files
+        run: |
+          git diff --name-only origin/main...HEAD | grep '\.sql$' > new_migrations.txt
+          # Output the list of new migrations for debugging
+          echo "New migration files:"
+          echo "$(cat new_migrations.txt)"
