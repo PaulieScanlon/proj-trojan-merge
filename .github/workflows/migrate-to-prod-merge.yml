@@ -12,7 +12,7 @@ env:
   PG_VERSION: '16'
 
 jobs:
-  run-on-main-merge:
+  pr-merged:
     runs-on: ubuntu-latest
     if: github.event.pull_request.merged == true # Ensure the PR was merged
 
