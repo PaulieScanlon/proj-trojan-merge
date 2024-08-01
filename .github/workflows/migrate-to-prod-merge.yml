@@ -31,20 +31,29 @@ jobs:
           # Fetch the latest state of the main branch
           git fetch origin main
 
-      - name: Get changed files
+      - name: Fetch base branch
         run: |
-          # Get the commit SHA of the push
-          latest_commit=$(git rev-parse HEAD)
-          echo "Latest Commit SHA: $latest_commit"
+          # Fetch the latest state of the base branch (main)
+          git fetch origin main
+          git checkout main
+          git pull origin main
+          echo "Base branch updated"
 
-          # Get the commit SHA of the base branch
-          base_commit=$(git rev-parse origin/main)
-          echo "Base Commit SHA: $base_commit"
+      - name: Get latest commit SHA
+        id: get_commit_sha
+        run: |
+          # Get the latest commit SHA from the push event
+          latest_commit_sha=$(git rev-parse HEAD)
+          echo "Latest Commit SHA: $latest_commit_sha"
+          echo "latest_commit_sha=$latest_commit_sha" >> $GITHUB_ENV
 
-          # List files changed between the base commit and the latest commit
-          git diff --name-only $base_commit $latest_commit > migration_files.txt
-          echo "Changed files:"
-          cat migration_files.txt
+      - name: Get base commit SHA
+        id: get_base_commit_sha
+        run: |
+          # Get the base commit SHA for comparison
+          base_commit_sha=$(git rev-parse origin/main)
+          echo "Base Commit SHA: $base_commit_sha"
+          echo "base_commit_sha=$base_commit_sha" >> $GITHUB_ENV
 
       # - name: Apply migrations
       #   run: |
