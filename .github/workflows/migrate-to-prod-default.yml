@@ -53,7 +53,7 @@ jobs:
               echo "$file does not exist"
               continue
             fi
-            
+
             # Check if the file has a .sql extension
             if [[ "$file" != *.sql ]]; then
               echo "$file is not a SQL file"
