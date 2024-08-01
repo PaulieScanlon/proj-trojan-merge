@@ -26,34 +26,23 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get latest commit SHA
-        id: get_commit_sha
-        run: |
-          # Get the latest commit SHA of the push
-          merged_commit_sha=$(git rev-parse HEAD)
-          echo "Merged Commit SHA: $merged_commit_sha"
-          echo "merged_commit_sha=$merged_commit_sha" >> $GITHUB_ENV
-
       - name: Fetch base branch
         run: |
+          # Fetch the latest state of the main branch
           git fetch origin main
-          git checkout main
-          git pull origin main
-          git log -n 1 --oneline  # Verify the latest commit on main
-
-      - name: Verify merge base commit
-        run: |
-          # Find the common base commit of main and HEAD
-          merge_base=$(git merge-base main HEAD)
-          echo "Merge Base Commit: $merge_base"
-          echo "merge_base=$merge_base" >> $GITHUB_ENV
-          # List commits between the base commit and the latest commit
-          git log --oneline $merge_base..HEAD
 
       - name: Get changed files
         run: |
+          # Get the commit SHA of the push
+          latest_commit=$(git rev-parse HEAD)
+          echo "Latest Commit SHA: $latest_commit"
+
+          # Get the commit SHA of the base branch
+          base_commit=$(git rev-parse origin/main)
+          echo "Base Commit SHA: $base_commit"
+
           # List files changed between the base commit and the latest commit
-          git diff --name-only $merge_base HEAD > migration_files.txt
+          git diff --name-only $base_commit $latest_commit > migration_files.txt
           echo "Changed files:"
           cat migration_files.txt
 
