@@ -17,52 +17,40 @@ jobs:
     if: github.event.pull_request.merged == true # Ensure the PR was merged
 
     steps:
-      - name: Install PostgreSQL
-        run: |
-          sudo apt update
-          yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-          sudo apt install -y postgresql-${{ env.PG_VERSION }}
+      # - name: Install PostgreSQL
+      #   run: |
+      #     sudo apt update
+      #     yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+      #     sudo apt install -y postgresql-${{ env.PG_VERSION }}
 
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get base branch SHA
-        run: |
-          git fetch origin main
-          base_commit_sha=$(git rev-parse origin/main)
-          echo "Base Commit SHA: $base_commit_sha"
-          echo "base_commit_sha=$base_commit_sha" >> $GITHUB_ENV
-
-      - name: Get merged commit SHA
-        run: |
-          merged_commit_sha=$(git rev-parse HEAD)
-          echo "Merged Commit SHA: $merged_commit_sha"
-          echo "merged_commit_sha=$merged_commit_sha" >> $GITHUB_ENV
-
       - name: Get changed files
         run: |
-          git diff --name-only $base_commit_sha $merged_commit_sha > migration_files.txt
+          git fetch origin main:main
+          git diff --name-only --diff-filter=d main~ main > migration_files.txt
           echo "Changed files:"
           cat migration_files.txt
 
-      - name: Apply migrations
-        run: |
-          while IFS= read -r file; do
-            if [ ! -f "$file" ]; then
-              echo "$file does not exist"
-              continue
-            fi
+      # - name: Apply migrations
+      #   run: |
+      #     while IFS= read -r file; do
+      #       if [ ! -f "$file" ]; then
+      #         echo "$file does not exist"
+      #         continue
+      #       fi
 
-            if [[ "$file" != *.sql ]]; then
-              echo "$file is not a SQL file"
-              continue
-            fi
+      #       if [[ "$file" != *.sql ]]; then
+      #         echo "$file is not a SQL file"
+      #         continue
+      #       fi
 
-            echo "Processing $file"
-            if ! /usr/lib/postgresql/${{ env.PG_VERSION }}/bin/psql "${{ env.PROD_DATABASE_URL }}" < "$file"; then
-              echo "Error applying $file"
-              exit 1
-            fi
-          done < migration_files.txt
+      #       echo "Processing $file"
+      #       if ! /usr/lib/postgresql/${{ env.PG_VERSION }}/bin/psql "${{ env.PROD_DATABASE_URL }}" < "$file"; then
+      #         echo "Error applying $file"
+      #         exit 1
+      #       fi
+      #     done < migration_files.txt
