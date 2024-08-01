@@ -15,11 +15,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # - name: Install PostgreSQL
-      #   run: |
-      #     sudo apt update
-      #     yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
-      #     sudo apt install -y postgresql-${{ env.PG_VERSION }}
+      - name: Install PostgreSQL
+        run: |
+          sudo apt update
+          yes '' | sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+          sudo apt install -y postgresql-${{ env.PG_VERSION }}
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -47,25 +47,25 @@ jobs:
           echo "Changed files:"
           cat migration_files.txt
 
-      # - name: Apply migrations
-      #   run: |
-      #     while IFS= read -r file; do
-      #       # Check if the file exists
-      #       if [ ! -f "$file" ]; then
-      #         echo "$file does not exist"
-      #         continue
-      #       fi
+      - name: Apply migrations
+        run: |
+          while IFS= read -r file; do
+            # Check if the file exists
+            if [ ! -f "$file" ]; then
+              echo "$file does not exist"
+              continue
+            fi
 
-      #       # Check if the file has a .sql extension
-      #       if [[ "$file" != *.sql ]]; then
-      #         echo "$file is not a SQL file"
-      #         continue
-      #       fi
+            # Check if the file has a .sql extension
+            if [[ "$file" != *.sql ]]; then
+              echo "$file is not a SQL file"
+              continue
+            fi
 
-      #       # Apply the SQL file
-      #       echo "Processing $file"
-      #       if ! /usr/lib/postgresql/${{ env.PG_VERSION }}/bin/psql "${{ env.PROD_DATABASE_URL }}" < "$file"; then
-      #         echo "Error applying $file"
-      #         exit 1
-      #       fi
-      #     done < migration_files.txt
+            # Apply the SQL file
+            echo "Processing $file"
+            if ! /usr/lib/postgresql/${{ env.PG_VERSION }}/bin/psql "${{ env.PROD_DATABASE_URL }}" < "$file"; then
+              echo "Error applying $file"
+              exit 1
+            fi
+          done < migration_files.txt
