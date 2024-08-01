@@ -37,11 +37,19 @@ jobs:
       - name: Fetch base branch
         run: |
           git fetch origin main
+          git checkout main
+          git pull origin main
+
+      - name: Verify base branch
+        run: |
+          echo "Base branch status:"
+          git status
+          git log -n 1
 
       - name: Get changed files
         run: |
           # List files changed between the base branch and the latest commit
-          git diff --name-only origin/main...$merged_commit_sha > migration_files.txt
+          git diff --name-only HEAD...$merged_commit_sha > migration_files.txt
           echo "Changed files:"
           cat migration_files.txt
 
