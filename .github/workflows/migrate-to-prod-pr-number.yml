@@ -1,4 +1,4 @@
-name: Migrate to prod (default)
+name: Migrate to prod (pr number)
 
 on:
   pull_request:
