@@ -28,25 +28,21 @@ jobs:
 
       - name: Fetch base branch
         run: |
-          # Fetch the latest state of the main branch
           git fetch origin main
           echo "Fetched latest changes from main"
 
       - name: Get previous commit SHA
         id: get_previous_commit
         run: |
-          # Get the previous commit SHA (before the latest push)
           previous_commit_sha=$(git rev-parse HEAD^)
           echo "Previous Commit SHA: $previous_commit_sha"
           echo "previous_commit_sha=$previous_commit_sha" >> $GITHUB_ENV
 
       - name: Get changed files
         run: |
-          # Get the latest commit SHA from the push event
           latest_commit_sha=$(git rev-parse HEAD)
           echo "Latest Commit SHA: $latest_commit_sha"
 
-          # List files changed between the previous commit and the latest commit
           git diff --name-only $previous_commit_sha $latest_commit_sha > migration_files.txt
           echo "Changed files:"
           cat migration_files.txt
