@@ -39,17 +39,21 @@ jobs:
           git fetch origin main
           git checkout main
           git pull origin main
+          git log -n 1 --oneline  # Verify the latest commit on main
 
-      - name: Verify base branch
+      - name: Verify merge base commit
         run: |
-          echo "Base branch status:"
-          git status
-          git log -n 1
+          # Find the common base commit of main and HEAD
+          merge_base=$(git merge-base main HEAD)
+          echo "Merge Base Commit: $merge_base"
+          echo "merge_base=$merge_base" >> $GITHUB_ENV
+          # List commits between the base commit and the latest commit
+          git log --oneline $merge_base..HEAD
 
       - name: Get changed files
         run: |
-          # List files changed between the base branch and the latest commit
-          git diff --name-only HEAD...$merged_commit_sha > migration_files.txt
+          # List files changed between the base commit and the latest commit
+          git diff --name-only $merge_base HEAD > migration_files.txt
           echo "Changed files:"
           cat migration_files.txt
 
