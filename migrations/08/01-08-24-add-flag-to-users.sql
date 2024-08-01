@@ -1,7 +1,0 @@
-
-BEGIN;
-
-ALTER TABLE users
-ADD COLUMN flag VARCHAR(13);
-
-COMMIT;
