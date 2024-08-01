@@ -7,7 +7,6 @@ on:
       - main
 
 env:
-  GH_TOKEN: ${{ secrets.ACTIONS_GITHUB_TOKEN }}
   PROD_DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }} # Production or primary database
   PG_VERSION: '16'
 
