@@ -1,4 +1,4 @@
-name: Migrate to prod (merge)
+name: Migrate to prod (sql)
 
 on:
   pull_request:
